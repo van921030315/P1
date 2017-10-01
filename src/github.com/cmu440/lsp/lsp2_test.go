@@ -525,10 +525,10 @@ func (ts *windowTestSystem) runExponentialBackOffTest() {
 	}
 	time.Sleep(time.Millisecond * time.Duration(epochLen*ExponentialBackOffTestEpochToListen))
 	var sniffRes = lspnet.StopSniff()
-	if sniffRes.NumSentData != wsize*numClients*5 {
+	if sniffRes.NumSentData > wsize*numClients*6 || sniffRes.NumSentData < wsize*numClients*4 {
 		ts.t.Log(sniffRes)
-		ts.t.Fatalf("Number of trying messages does not match: expected %d, got %d",
-			wsize*numClients*5, sniffRes.NumSentData)
+		ts.t.Fatalf("Number of trying messages does not match: expected [%d, %d], got %d",
+			wsize*numClients*4, wsize*numClients*6, sniffRes.NumSentData)
 	}
 }
 
