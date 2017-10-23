@@ -1,11 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/cmu440/bitcoin"
+	"github.com/cmu440/lsp"
 	"os"
 	"strconv"
-
-	"github.com/cmu440/lsp"
 )
 
 func main() {
@@ -24,17 +25,46 @@ func main() {
 
 	client, err := lsp.NewClient(hostport, lsp.NewParams())
 	if err != nil {
-		fmt.Println("Failed to connect to server:", err)
+		//fmt.Println("Failed to connect to server:", err)
+		printDisconnected()
 		return
 	}
 
-	defer client.Close()
+	//defer client.Close()
 
-	_ = message    // Keep compiler happy. Please remove!
-	_ = maxNonce   // Keep compiler happy. Please remove!
-	// TODO: implement this!
+	// generate a new request
+	request := bitcoin.NewRequest(message, 0, maxNonce)
+	rawMsg, _ := json.Marshal(request)
 
-	printResult(0, 0)
+	//if err != nil {
+	//fmt.Println("Failed to marshall the request")
+	//fmt.Println(err.Error())
+	//	return
+	//}
+
+	err = client.Write(rawMsg)
+	if err != nil {
+		printDisconnected()
+		return
+	}
+	data, readerr := client.Read()
+	if readerr != nil {
+		printDisconnected()
+		return
+	}
+
+	result := new(bitcoin.Message)
+	err = json.Unmarshal(data, result)
+	if err != nil {
+		//fmt.Println("Failed to marshall the request")
+		//fmt.Println(err.Error())
+		return
+	}
+
+	if result.Type == bitcoin.Result {
+		printResult(result.Hash, result.Nonce)
+	}
+
 }
 
 // printResult prints the final result to stdout.
